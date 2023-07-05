@@ -19,9 +19,9 @@ resource "aws_instance" "honeypot" {
   user_data = <<-EOF
     #!/bin/bash
     echo 'Setting up honeypot...'
-    # Add your setup commands here
+    # setup commands
     echo 'Honeypot setup complete.'
-  EOF
+    EOF
 
   tags = {
     Name = "honeypot-instance"
@@ -66,24 +66,3 @@ resource "aws_cloudwatch_log_stream" "honeypot_stream" {
   name           = "honeypot-stream"
   log_group_name = aws_cloudwatch_log_group.honeypot_logs.name
 }
-
-# resource "aws_instance" "honeypot" {
-#   # ...
-
-#   root_block_device {
-#     volume_type           = "gp2"
-#     volume_size           = 30
-#     delete_on_termination = true
-#   }
-
-#   iam_instance_profile {
-#     name = aws_iam_instance_profile.honeypot_profile.name
-#   }
-
-#   user_data = <<-EOF
-#     #!/bin/bash
-#     echo 'Setting up honeypot...'
-#     # Add your setup commands here
-#     echo 'Honeypot setup complete.'
-#   EOF
-# }
