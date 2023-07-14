@@ -1,68 +1,66 @@
 provider "aws" {
-  region = "us-east-1"  # Change to your desired region
+  region = var.ec2_region
 }
 
-resource "aws_instance" "honeypot" {
-  ami           = "ami-0c94855ba95c71c99"  # Choose a suitable AMI
-  instance_type = "t2.micro"  # Adjust instance type as needed
-
-  root_block_device {
-    volume_type           = "gp2"
-    volume_size           = 30
-    delete_on_termination = true
-  }
-
-  # iam_instance_profile {
-  #   name = aws_iam_instance_profile.honeypot_profile.name
-  # }
-
-  user_data = <<-EOF
-    #!/bin/bash
-    echo 'Setting up honeypot...'
-    # setup commands
-    echo 'Honeypot setup complete.'
-    EOF
-
-  tags = {
-    Name = "honeypot-instance"
-  }
-
-  vpc_security_group_ids = [aws_security_group.honeypot.id]
-}
-
-resource "aws_security_group" "honeypot" {
-  name        = "honeypot-security-group"
-  description = "Security group for the honeypot"
-
+resource "aws_security_group" "tpot" {
+  name        = "T-Pot"
+  description = "T-Pot Honeypot"
+  vpc_id      = var.ec2_vpc_id
   ingress {
-    from_port   = 22
-    to_port     = 22
+    from_port   = 0
+    to_port     = 64000
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 64000
+    protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  # Add more ingress rules as needed
-
+  ingress {
+    from_port   = 64294
+    to_port     = 64294
+    protocol    = "tcp"
+    cidr_blocks = var.admin_ip
+  }
+  ingress {
+    from_port   = 64295
+    to_port     = 64295
+    protocol    = "tcp"
+    cidr_blocks = var.admin_ip
+  }
+  ingress {
+    from_port   = 64297
+    to_port     = 64297
+    protocol    = "tcp"
+    cidr_blocks = var.admin_ip
+  }
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  tags = {
+    Name = "T-Pot"
+  }
 }
 
-resource "aws_cloudwatch_log_group" "honeypot_logs" {
-  name = "/aws/instance/honeypot"
-}
-
-resource "aws_cloudwatch_log_stream" "honeypot_stream" {
-  name           = "honeypot-stream"
-  log_group_name = aws_cloudwatch_log_group.honeypot_logs.name
+resource "aws_instance" "tpot" {
+  ami           = var.ec2_ami[var.ec2_region]
+  instance_type = var.ec2_instance_type
+  key_name      = var.ec2_ssh_key_name
+  subnet_id     = var.ec2_subnet_id
+  tags = {
+    Name = "T-Pot Honeypot"
+  }
+  root_block_device {
+    volume_type           = "gp2"
+    volume_size           = 128
+    delete_on_termination = true
+  }
+  user_data                   = templatefile("../cloud-init.yaml", { timezone = var.timezone, password = var.linux_password, tpot_flavor = var.tpot_flavor, web_user = var.web_user, web_password = var.web_password })
+  vpc_security_group_ids      = [aws_security_group.tpot.id]
+  associate_public_ip_address = true
 }
