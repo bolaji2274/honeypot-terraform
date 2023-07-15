@@ -1,5 +1,6 @@
-# honeypot-terraform
-```
-Using AWS
+# Honeypot 🍯 Implementation using Terraform
+### Requirements
+* AWS
+* Ansible
+* Terraform
 
-```
