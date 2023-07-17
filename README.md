@@ -4,4 +4,4 @@
 * Ansible
 * Terraform
 
-![Alt text](../honeypot.drawio.png)
+![Alt text]([..](https://github.com/bolaji2274/honeypot-terraform/honeypot.drawio.png)
