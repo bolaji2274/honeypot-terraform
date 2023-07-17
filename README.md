@@ -4,4 +4,4 @@
 * Ansible
 * Terraform
 
-![Alt text](image ../honeypot.drawio.png)
+![Alt text](../honeypot.drawio.png)
