@@ -5,7 +5,7 @@ variable "admin_ip" {
 
 variable "ec2_vpc_id" {
   description = "ID of AWS VPC"
-  default     = "vpc-XXX"
+  default     = "default"
 }
 
 variable "ec2_subnet_id" {
@@ -25,8 +25,8 @@ variable "ec2_ssh_key_name" {
 # https://aws.amazon.com/ec2/instance-types/
 # t3.large = 2 vCPU, 8 GiB RAM
 variable "ec2_instance_type" {
-  # default = "t3.large"
-  default = "t2.micro"
+  default = "t3.large"
+  # default = "t2.micro"
 }
 
 # Refer to https://wiki.debian.org/Cloud/AmazonEC2Image/Bullseye
