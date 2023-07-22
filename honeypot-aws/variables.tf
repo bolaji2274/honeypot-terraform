@@ -3,23 +3,24 @@ variable "admin_ip" {
   description = "admin IP addresses in CIDR format"
 }
 
-variable "ec2_vpc_id" {
-  description = "ID of AWS VPC"
-  default     = "default"
-}
+# variable "ec2_vpc_id" {
+#   description = "ID of AWS VPC"
+#   default     = "default"
+# }
 
-variable "ec2_subnet_id" {
-  description = "ID of AWS VPC subnet"
-  default     = "subnet-YYY"
-}
+# variable "ec2_subnet_id" {
+#   description = "ID of AWS VPC subnet"
+#   # default     = "subnet-YYY"
+# }
 
 variable "ec2_region" {
   description = "AWS region to launch servers"
   default     = "eu-west-1"
+  # default = "us-east-1"
 }
 
 variable "ec2_ssh_key_name" {
-  default = "default"
+  default = "honeypot"
 }
 
 # https://aws.amazon.com/ec2/instance-types/
@@ -79,7 +80,7 @@ variable "tpot_flavor" {
 }
 
 variable "web_user" {
-  default     = "webuser"
+  # default     = "webuser"
   description = "Set a username for the web user"
 }
 

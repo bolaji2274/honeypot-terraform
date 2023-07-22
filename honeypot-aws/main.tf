@@ -2,10 +2,60 @@ provider "aws" {
   region = var.ec2_region
 }
 
-resource "aws_security_group" "tpot" {
-  name        = "T-Pot"
-  description = "T-Pot Honeypot"
+
+# Creating a Main VPC
+resource "aws_vpc" "main-vpc" {
+  enable_dns_hostnames = true
+  enable_dns_support = true
+  cidr_block = "10.10.0.0/16"
+}
+
+
+# Creating a subnet inside our main VPC
+resource "aws_subnet" "main-subnet" {
+  vpc_id = aws_vpc.main-vpc.id
+  cidr_block = "10.10.1.0/24"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "main-subnet"
+  }
+}
+
+# Creating an internet gateway inside main vpc
+resource "aws_internet_gateway" "main-igw" {
+  vpc_id = aws_vpc.main-vpc.id
+
+  tags = {
+    Name = "main-iqw"
+  }
+}
+
+# Creating a route table for main vpc
+resource "aws_route_table" "main-rt" {
+  vpc_id = aws_vpc.main-vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main-igw.id
+  }
+
+  tags = {
+    Name = "main-rt"
+  }
+}
+
+# Creating subnet association to associate our subnet with route table
+resource "aws_route_table_association" "main-rt-association" {
+  subnet_id = aws_subnet.main-subnet.id
+  route_table_id = aws_route_table.main-rt.id
+}
+
+resource "aws_security_group" "tf-honeypot-sg" {
+  name        = "tf-honeypot-sg"
+  description = "Honeypot security group for inbound and outbound rule"
   # vpc_id      = var.ec2_vpc_id
+  vpc_id = aws_vpc.main-vpc.id
   ingress {
     from_port   = 0
     to_port     = 64000
@@ -43,17 +93,30 @@ resource "aws_security_group" "tpot" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   tags = {
-    Name = "T-Pot"
+    Name = "honeypot system"
   }
-}
+# }
+# data "aws_vpc" "default" {
+#   default = true
+# }
 
-resource "aws_instance" "tpot" {
+# data "aws_subnets" "default" {
+#   filter {
+#     name = "vpc-id"
+#     values = [data.aws_vpc.default.id]
+#   }
+  
+}
+resource "aws_instance" "honeypot" {
   ami           = var.ec2_ami[var.ec2_region]
   instance_type = var.ec2_instance_type
-  key_name      = var.ec2_ssh_key_name
-  subnet_id     = var.ec2_subnet_id
+  # key_name      = var.ec2_ssh_key_name
+  key_name = "honeypot.pem"
+  # subnet_id     = var.ec2_subnet_id
+  subnet_id = aws_subnet.main-subnet.id
+
   tags = {
-    Name = "T-Pot Honeypot"
+    Name = "Honeypot"
   }
   root_block_device {
     volume_type           = "gp2"
@@ -61,6 +124,6 @@ resource "aws_instance" "tpot" {
     delete_on_termination = true
   }
   user_data                   = templatefile("../cloud-init.yaml", { timezone = var.timezone, password = var.linux_password, tpot_flavor = var.tpot_flavor, web_user = var.web_user, web_password = var.web_password })
-  vpc_security_group_ids      = [aws_security_group.tpot.id]
+  vpc_security_group_ids      = [aws_security_group.tf-honeypot-sg.id]
   associate_public_ip_address = true
 }
