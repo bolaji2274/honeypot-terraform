@@ -1,5 +1,6 @@
 provider "aws" {
-  region = var.ec2_region
+  # region = var.ec2_region
+  region = "us-east-1"
 }
 
 
@@ -57,6 +58,12 @@ resource "aws_security_group" "tf-honeypot-sg" {
   # vpc_id      = var.ec2_vpc_id
   vpc_id = aws_vpc.main-vpc.id
   ingress {
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = [ "0.0.0.0/0" ]
+  }
+  ingress {
     from_port   = 0
     to_port     = 64000
     protocol    = "tcp"
@@ -108,10 +115,11 @@ resource "aws_security_group" "tf-honeypot-sg" {
   
 }
 resource "aws_instance" "honeypot" {
-  ami           = var.ec2_ami[var.ec2_region]
+  # ami           = var.ec2_ami[var.ec2_region]
+  ami = "ami-05dd1b6e7ef6f8378"
   instance_type = var.ec2_instance_type
   # key_name      = var.ec2_ssh_key_name
-  key_name = "honeypot.pem"
+  key_name = "web"
   # subnet_id     = var.ec2_subnet_id
   subnet_id = aws_subnet.main-subnet.id
 
@@ -123,7 +131,13 @@ resource "aws_instance" "honeypot" {
     volume_size           = 128
     delete_on_termination = true
   }
-  user_data                   = templatefile("../cloud-init.yaml", { timezone = var.timezone, password = var.linux_password, tpot_flavor = var.tpot_flavor, web_user = var.web_user, web_password = var.web_password })
+  # user_data                   = templatefile("./cloud-init.yaml", { timezone = var.timezone, password = var.linux_password, tpot_flavor = var.tpot_flavor, web_user = var.web_user, web_password = var.web_password })
+  # user_data_replace_on_change = true
   vpc_security_group_ids      = [aws_security_group.tf-honeypot-sg.id]
   associate_public_ip_address = true
+}
+
+output "public_ip" {
+  value       = aws_instance.honeypot.public_ip
+  description = "The public ip address of a webserver"
 }
