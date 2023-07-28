@@ -102,17 +102,7 @@ resource "aws_security_group" "tf-honeypot-sg" {
   tags = {
     Name = "honeypot system"
   }
-# }
-# data "aws_vpc" "default" {
-#   default = true
-# }
 
-# data "aws_subnets" "default" {
-#   filter {
-#     name = "vpc-id"
-#     values = [data.aws_vpc.default.id]
-#   }
-  
 }
 resource "aws_instance" "honeypot" {
   # ami           = var.ec2_ami[var.ec2_region]
@@ -131,8 +121,8 @@ resource "aws_instance" "honeypot" {
     volume_size           = 128
     delete_on_termination = true
   }
-  # user_data                   = templatefile("./cloud-init.yaml", { timezone = var.timezone, password = var.linux_password, tpot_flavor = var.tpot_flavor, web_user = var.web_user, web_password = var.web_password })
-  # user_data_replace_on_change = true
+  user_data                   = templatefile("./cloud-init.yaml", { timezone = var.timezone, password = var.linux_password, tpot_flavor = var.tpot_flavor, web_user = var.web_user, web_password = var.web_password })
+  user_data_replace_on_change = true
   vpc_security_group_ids      = [aws_security_group.tf-honeypot-sg.id]
   associate_public_ip_address = true
 }
