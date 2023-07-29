@@ -1,4 +1,5 @@
 variable "admin_ip" {
+  # Get the ip address of the system and specify it in cidr block
   default     = ["127.0.0.1/32"]
   description = "admin IP addresses in CIDR format"
 }
@@ -15,8 +16,8 @@ variable "admin_ip" {
 
 variable "ec2_region" {
   description = "AWS region to launch servers"
-  default     = "eu-west-1"
-  # default = "us-east-1"
+  # default     = "eu-west-1"
+  default = "us-east-1a"
 }
 
 variable "ec2_ssh_key_name" {
@@ -27,6 +28,7 @@ variable "ec2_ssh_key_name" {
 # t3.large = 2 vCPU, 8 GiB RAM
 variable "ec2_instance_type" {
   default = "t3.large"
+  # default = "t3.medium"
   # default = "t2.micro"
 }
 

@@ -7,15 +7,15 @@ provider "aws" {
 # Creating a Main VPC
 resource "aws_vpc" "main-vpc" {
   enable_dns_hostnames = true
-  enable_dns_support   = true
-  cidr_block           = "10.10.0.0/16"
+  enable_dns_support = true
+  cidr_block = "10.10.0.0/16"
 }
 
 
 # Creating a subnet inside our main VPC
 resource "aws_subnet" "main-subnet" {
-  vpc_id                  = aws_vpc.main-vpc.id
-  cidr_block              = "10.10.1.0/24"
+  vpc_id = aws_vpc.main-vpc.id
+  cidr_block = "10.10.1.0/24"
   map_public_ip_on_launch = true
 
   tags = {
@@ -48,7 +48,7 @@ resource "aws_route_table" "main-rt" {
 
 # Creating subnet association to associate our subnet with route table
 resource "aws_route_table_association" "main-rt-association" {
-  subnet_id      = aws_subnet.main-subnet.id
+  subnet_id = aws_subnet.main-subnet.id
   route_table_id = aws_route_table.main-rt.id
 }
 
@@ -58,10 +58,10 @@ resource "aws_security_group" "tf-honeypot-sg" {
   # vpc_id      = var.ec2_vpc_id
   vpc_id = aws_vpc.main-vpc.id
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = [ "0.0.0.0/0" ]
   }
   ingress {
     from_port   = 0
@@ -79,19 +79,22 @@ resource "aws_security_group" "tf-honeypot-sg" {
     from_port   = 64294
     to_port     = 64294
     protocol    = "tcp"
-    cidr_blocks = var.admin_ip
+    # cidr_blocks = var.admin_ip
+    cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
     from_port   = 64295
     to_port     = 64295
     protocol    = "tcp"
     cidr_blocks = var.admin_ip
+    # cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
     from_port   = 64297
     to_port     = 64297
     protocol    = "tcp"
     cidr_blocks = var.admin_ip
+    # cidr_blocks = ["0.0.0.0/0"]
   }
   egress {
     from_port   = 0
@@ -106,7 +109,7 @@ resource "aws_security_group" "tf-honeypot-sg" {
 }
 resource "aws_instance" "honeypot" {
   # ami           = var.ec2_ami[var.ec2_region]
-  ami           = "ami-05dd1b6e7ef6f8378"
+  ami = "ami-05dd1b6e7ef6f8378"
   instance_type = var.ec2_instance_type
   # key_name      = var.ec2_ssh_key_name
   key_name = "web"
@@ -133,17 +136,3 @@ output "public_ip" {
 }
 
 
-# resource "aws_instance" "pfsense" {
-#   ami = "ami-0f1c68e571ab71af6"
-#   instance_type = "t3.medium"
-
-#   tags = {
-#     Name = "pfsense"
-#   }
-
-#     root_block_device {
-#     volume_type           = "gp2"
-#     volume_size           = 30
-#     delete_on_termination = true
-#   }
-# }
