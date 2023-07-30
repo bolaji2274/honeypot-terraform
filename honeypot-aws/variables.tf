@@ -1,6 +1,6 @@
 variable "admin_ip" {
   # Get the ip address of the system and specify it in cidr block
-  default     = ["127.0.0.1/32"]
+  default     = ["0.0.0.0/0"]
   description = "admin IP addresses in CIDR format"
 }
 
