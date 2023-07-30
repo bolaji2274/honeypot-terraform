@@ -79,8 +79,8 @@ resource "aws_security_group" "tf-honeypot-sg" {
     from_port   = 64294
     to_port     = 64294
     protocol    = "tcp"
-    # cidr_blocks = var.admin_ip
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.admin_ip
+    # cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
     from_port   = 64295
