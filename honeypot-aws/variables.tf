@@ -14,19 +14,17 @@ variable "admin_ip" {
 #   # default     = "subnet-YYY"
 # }
 
-variable "ec2_region" {
+variable "region" {
   description = "AWS region to launch servers"
   # default     = "eu-west-1"
   default = "us-east-1a"
 }
 
-variable "ec2_ssh_key_name" {
+variable "key_name" {
   default = "honeypot"
 }
 
-# https://aws.amazon.com/ec2/instance-types/
-# t3.large = 2 vCPU, 8 GiB RAM
-variable "ec2_instance_type" {
+variable "instance_type" {
   default = "t3.large"
   # default = "t3.medium"
   # default = "t2.micro"
@@ -65,33 +63,49 @@ variable "timezone" {
   default = "UTC"
 }
 
-variable "linux_password" {
-  #default = "LiNuXuSeRPaSs#"
-  description = "Set a password for the default user"
+# variable "linux_password" {
+#   #default = "LiNuXuSeRPaSs#"
+#   description = "Set a password for the default user"
 
-  validation {
-    condition     = length(var.linux_password) > 0
-    error_message = "Please specify a password for the default user."
-  }
-}
+#   validation {
+#     condition     = length(var.linux_password) > 0
+#     error_message = "Please specify a password for the default user."
+#   }
+# }
 
 ## These will go in the generated tpot.conf file ##
-variable "tpot_flavor" {
-  default     = "STANDARD"
-  description = "Specify your tpot flavor [STANDARD, HIVE, HIVE_SENSOR, INDUSTRIAL, LOG4J, MEDICAL, MINI, SENSOR]"
+# variable "tpot_flavor" {
+#   default     = "STANDARD"
+#   description = "Specify your tpot flavor [STANDARD, HIVE, HIVE_SENSOR, INDUSTRIAL, LOG4J, MEDICAL, MINI, SENSOR]"
+# }
+
+# variable "web_user" {
+#   # default     = "webuser"
+#   description = "Set a username for the web user"
+# }
+
+# variable "web_password" {
+#   #default = "w3b$ecret"
+#   description = "Set a password for the web user"
+
+#   validation {
+#     condition     = length(var.web_password) > 0
+#     error_message = "Please specify a password for the web user."
+#   }
+# }
+
+
+# pfsense authentication configuration
+variable "pfsense_user" {
+  # default     = "pfsense"
+  description = "Set a username for the pfsense user"
 }
 
-variable "web_user" {
-  # default     = "webuser"
-  description = "Set a username for the web user"
-}
-
-variable "web_password" {
-  #default = "w3b$ecret"
-  description = "Set a password for the web user"
+variable "pfsense_password" {
+  description = " Set a password for the pfsense"
 
   validation {
-    condition     = length(var.web_password) > 0
+    condition     = length(var.pfsense_password) > 0
     error_message = "Please specify a password for the web user."
   }
 }
