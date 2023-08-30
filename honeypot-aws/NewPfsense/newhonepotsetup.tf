@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "us-east-1"
+  region = "us-east-2"
 }
 
 # creating a main vpv for the network
@@ -22,7 +22,7 @@ resource "aws_internet_gateway" "igw" {
     Name = "IGW"
   }
   depends_on = [ 
-    aws_vpc.main-vpc.id
+    aws_vpc.main-vpc
    ]
 }
 # create a public subnet within our VPC for
@@ -34,16 +34,16 @@ resource "aws_subnet" "public_subnet" {
     Name = "Public-subnet"
   }
   depends_on = [
-    aws_vpc.vpc,
+    aws_vpc.main-vpc,
     aws_internet_gateway.igw
   ]
 }
 # create a pfsense inside our public subnet
 
 resource "aws_instance" "pfsense-firewall" {
-  ami = ""
-  instance_type = ""
-  key_name = "web"
+  ami = "ami-0f1c68e571ab71af6"
+  instance_type = "m5.large"
+  # key_name = "web"
   subnet_id = aws_subnet.public_subnet.id
   tags = {
     Name = "Pfsense"
@@ -56,14 +56,15 @@ resource "aws_instance" "pfsense-firewall" {
 }
 # create a private subnet for our for our 
 
-resource "aws_subnet" "private_subnet" {
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-east-1b"
+# resource "aws_subnet" "private_subnet" {
+#   cidr_block        = "10.0.1.0/24"
+#   vpc_id = aws_vpc.main-vpc.id
+#   availability_zone = "us-east-1b"
 
-  tags = {
-    Name = "private-subnet"
-  }
-  depends_on = [
-    aws_subnet.public_subnet
-  ]
-}
+#   tags = {
+#     Name = "private-subnet"
+#   }
+#   depends_on = [
+#     aws_subnet.public_subnet
+#   ]
+# }
