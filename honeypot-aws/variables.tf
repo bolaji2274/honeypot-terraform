@@ -63,49 +63,49 @@ variable "timezone" {
   default = "UTC"
 }
 
-# variable "linux_password" {
-#   #default = "LiNuXuSeRPaSs#"
-#   description = "Set a password for the default user"
-
-#   validation {
-#     condition     = length(var.linux_password) > 0
-#     error_message = "Please specify a password for the default user."
-#   }
-# }
-
-## These will go in the generated tpot.conf file ##
-# variable "tpot_flavor" {
-#   default     = "STANDARD"
-#   description = "Specify your tpot flavor [STANDARD, HIVE, HIVE_SENSOR, INDUSTRIAL, LOG4J, MEDICAL, MINI, SENSOR]"
-# }
-
-# variable "web_user" {
-#   # default     = "webuser"
-#   description = "Set a username for the web user"
-# }
-
-# variable "web_password" {
-#   #default = "w3b$ecret"
-#   description = "Set a password for the web user"
-
-#   validation {
-#     condition     = length(var.web_password) > 0
-#     error_message = "Please specify a password for the web user."
-#   }
-# }
-
-
-# pfsense authentication configuration
-variable "pfsense_user" {
-  # default     = "pfsense"
-  description = "Set a username for the pfsense user"
-}
-
-variable "pfsense_password" {
-  description = " Set a password for the pfsense"
+variable "linux_password" {
+  #default = "LiNuXuSeRPaSs#"
+  description = "Set a password for the default user"
 
   validation {
-    condition     = length(var.pfsense_password) > 0
+    condition     = length(var.linux_password) > 0
+    error_message = "Please specify a password for the default user."
+  }
+}
+
+# These will go in the generated tpot.conf file ##
+variable "tpot_flavor" {
+  default     = "STANDARD"
+  description = "Specify your tpot flavor [STANDARD, HIVE, HIVE_SENSOR, INDUSTRIAL, LOG4J, MEDICAL, MINI, SENSOR]"
+}
+
+variable "web_user" {
+  # default     = "webuser"
+  description = "Set a username for the web user"
+}
+
+variable "web_password" {
+  #default = "w3b$ecret"
+  description = "Set a password for the web user"
+
+  validation {
+    condition     = length(var.web_password) > 0
     error_message = "Please specify a password for the web user."
   }
 }
+
+
+# pfsense authentication configuration
+# variable "pfsense_user" {
+#   # default     = "pfsense"
+#   description = "Set a username for the pfsense user"
+# }
+
+# variable "pfsense_password" {
+#   description = " Set a password for the pfsense"
+
+#   validation {
+#     condition     = length(var.pfsense_password) > 0
+#     error_message = "Please specify a password for the web user."
+#   }
+# }

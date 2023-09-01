@@ -45,30 +45,30 @@ resource "aws_security_group" "pfsense_sg" {
   vpc_id      = aws_vpc.main-vpc.id
 
   ingress {
-    from_port  = 22
-    to_port    = 22
-    protocol   = "tcp"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    from_port  = 443
-    to_port    = 443
-    protocol   = "tcp"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
-    from_port  = 80
-    to_port    = 80
-    protocol   = "tcp"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
   egress {
     description = "All outgoing traffic is opened enabled"
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
-    cidr_blocks = [ "0.0.0.0/0" ]
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
   tags = {
     Name = "Pfsense-sg"
@@ -93,30 +93,64 @@ resource "aws_instance" "pfsense-firewall" {
     volume_size           = 20
     delete_on_termination = true
   }
-  
-  # network_interface {
-  #   device_index = 0
-  #   # network_interface_id = aws_network_interface.lan.id
-  #   # device_index = 0
-  #   network_card_index = 0
-  #   network_interface_id = aws_network_interface.lan.id
-  # }
-}
 
+}
+resource "aws_instance" "testing" {
+  ami           = "ami-0430580de6244e02e"
+  instance_type = "t2.micro"
+  key_name         = "pfsense"
+  subnet_id     = aws_subnet.private_subnet.id
+  vpc_security_group_ids = [aws_security_group.test.id]
+  tags = {
+    Name = "Testing"
+  }
+}
+resource "aws_security_group" "test" {
+  name        = "testing-sg"
+  description = "testing Security Group"
+  vpc_id      = aws_vpc.main-vpc.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+   ingress {
+        protocol = "-1"
+        from_port = 0
+        to_port = 0
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+  # ingress {
+  #   from_port   = 443
+  #   to_port     = 443
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
+  # ingress {
+  #   from_port   = 80
+  #   to_port     = 80
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
+
+}
 # resource "aws_network_interface" "lan" {
 #   subnet_id = aws_subnet.private_subnet.id
 #   # private_ip = ["10.0.2.5"]
 #   private_ip = "10.0.2.5"
 # }
-data "aws_network_interfaces" "example" {
-  tags = {
-    Name = "test"
-  }
-}
+# data "aws_network_interfaces" "example" {
+#   tags = {
+#     Name = "test"
+#   }
+# }
 
-output "example1" {
-  value = data.aws_network_interfaces.example.ids
-}
+# output "example1" {
+#   value = data.aws_network_interfaces.example.ids
+# }
 # create a private subnet for our for our 
 
 resource "aws_subnet" "private_subnet" {
@@ -132,17 +166,27 @@ resource "aws_subnet" "private_subnet" {
   ]
 }
 
+resource "aws_network_interface" "pfsense-internal" {
+  subnet_id       = aws_subnet.private_subnet.id
+  private_ips     = ["10.0.2.5"]
+  security_groups = [aws_security_group.pfsense_sg.id]
 
-# resource "aws_internet_gateway" "igw" {
-#   vpc_id = aws_vpc.vpc.id
+  attachment {
+    # instance     = "${aws_instance.test.id}"
+    instance     = aws_instance.pfsense-firewall.id
+    device_index = 1
+  }
+  tags = {
+    Name = "Pfsense-internal-network-interface-card"
+  }
+}
 
-#   tags = {
-#     Name = "igw"
-#   }
-
-#   depends_on = [
-#     aws_vpc.vpc
-#   ]
+# resource "aws_network_interface_attachment" "pfsense-internal" {
+#     # instance_id = "${aws_instance.test.id}"
+#     instance_id = aws_instance.pfsense-firewall.id
+#     # network_interface_id = "${aws_network_interface.test.id}"
+#     network_interface_id = aws_network_interface.pfsense-internal.id
+#     device_index = 0
 # }
 
 
@@ -150,8 +194,9 @@ resource "aws_route_table" "route-public" {
   vpc_id = aws_vpc.main-vpc.id
 
   route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
+    cidr_block           = "0.0.0.0/0"
+    gateway_id           = aws_internet_gateway.igw.id
+    network_interface_id = aws_instance.pfsense-firewall.id
   }
 
   tags = {
@@ -161,5 +206,42 @@ resource "aws_route_table" "route-public" {
     aws_vpc.main-vpc,
     aws_internet_gateway.igw,
     aws_subnet.public_subnet
+  ]
+}
+
+resource "aws_route_table_association" "route2public" {
+  subnet_id      = aws_subnet.public_subnet.id
+  route_table_id = aws_route_table.route-public.id
+
+  depends_on = [
+    aws_route_table.route-public
+  ]
+}
+
+resource "aws_route_table" "route-private" {
+  vpc_id = aws_vpc.main-vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    # gateway_id = aws_internet_gateway.igw.id
+    network_interface_id = aws_network_interface.pfsense-internal.id
+  }
+
+  tags = {
+    Name = "Route-public"
+  }
+  depends_on = [
+    aws_vpc.main-vpc,
+    # aws_internet_gateway.igw,
+    aws_subnet.private_subnet
+  ]
+}
+
+resource "aws_route_table_association" "route2private"{
+  subnet_id = aws_subnet.private_subnet.id
+  route_table_id = aws_route_table.route-private.id
+
+  depends_on = [
+    aws_route_table.route-private
   ]
 }
