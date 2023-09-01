@@ -1,6 +1,6 @@
 provider "aws" {
   # region = region
-  region = "us-east-1"
+  region = "us-east-2"
 }
 
 
@@ -79,22 +79,22 @@ resource "aws_security_group" "tf-honeypot-sg" {
     from_port   = 64294
     to_port     = 64294
     protocol    = "tcp"
-    cidr_blocks = var.admin_ip
-    # cidr_blocks = ["0.0.0.0/0"]
+    # cidr_blocks = var.admin_ip
+    cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
     from_port   = 64295
     to_port     = 64295
     protocol    = "tcp"
-    cidr_blocks = var.admin_ip
-    # cidr_blocks = ["0.0.0.0/0"]
+    # cidr_blocks = var.admin_ip
+    cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
     from_port   = 64297
     to_port     = 64297
     protocol    = "tcp"
-    cidr_blocks = var.admin_ip
-    # cidr_blocks = ["0.0.0.0/0"]
+    # cidr_blocks = var.admin_ip
+    cidr_blocks = ["0.0.0.0/0"]
   }
   egress {
     from_port   = 0
@@ -134,9 +134,11 @@ resource "aws_security_group" "tf-honeypot-sg" {
 # }
 resource "aws_instance" "honeypot" {
   # ami = "ami-05dd1b6e7ef6f8378" # debian 11 on us-east-1
-  ami = "ami-046e2e6927e88c5ec"
+  # ami = "ami-046e2e6927e88c5ec"
+  # debian 11 on us-east-2
+  ami = "ami-04dd0542609808c50"
   instance_type = var.instance_type
-  key_name = "web"
+  key_name = "pfsense+"
   subnet_id = aws_subnet.main-subnet.id
 
   tags = {
@@ -147,8 +149,8 @@ resource "aws_instance" "honeypot" {
     volume_size           = 128
     delete_on_termination = true
   }
-  # user_data                   = templatefile("./cloud-init.yaml", { timezone = var.timezone, password = var.linux_password, tpot_flavor = var.tpot_flavor, web_user = var.web_user, web_password = var.web_password })
-  # user_data_replace_on_change = true
+  user_data                   = templatefile("./cloud-init.yaml", { timezone = var.timezone, password = var.linux_password, tpot_flavor = var.tpot_flavor, web_user = var.web_user, web_password = var.web_password })
+  user_data_replace_on_change = true
   vpc_security_group_ids      = [aws_security_group.tf-honeypot-sg.id]
   associate_public_ip_address = true
 }
