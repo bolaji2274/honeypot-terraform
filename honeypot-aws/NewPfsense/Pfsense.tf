@@ -13,6 +13,7 @@ resource "aws_vpc" "main-vpc" {
     Name = "main-vpc"
   }
 }
+
 # creating an internet gateway by linking to the main vpc
 
 resource "aws_internet_gateway" "igw" {
@@ -25,6 +26,7 @@ resource "aws_internet_gateway" "igw" {
     aws_vpc.main-vpc
   ]
 }
+
 # create a public subnet within our VPC for
 resource "aws_subnet" "public_subnet" {
   vpc_id                  = aws_vpc.main-vpc.id
@@ -38,7 +40,77 @@ resource "aws_subnet" "public_subnet" {
     aws_internet_gateway.igw
   ]
 }
+resource "aws_subnet" "private_subnet" {
+  cidr_block = "10.0.2.0/24"
+  vpc_id     = aws_vpc.main-vpc.id
 
+  tags = {
+    Name = "private-subnet"
+  }
+  depends_on = [
+    aws_subnet.public_subnet
+  ]
+}
+
+resource "aws_route_table" "route-public" {
+  vpc_id = aws_vpc.main-vpc.id
+
+  route {
+    cidr_block           = "0.0.0.0/0"
+    gateway_id           = aws_internet_gateway.igw.id
+    # network_interface_id = aws_instance.pfsense-firewall.id
+  }
+
+  tags = {
+    Name = "Route-public"
+  }
+  depends_on = [
+    aws_vpc.main-vpc,
+    aws_internet_gateway.igw,
+    aws_subnet.public_subnet
+  ]
+}
+
+
+resource "aws_route_table" "route-private" {
+  vpc_id = aws_vpc.main-vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    # gateway_id = aws_internet_gateway.igw.id
+    network_interface_id = aws_network_interface.pfsense-internal.id
+  }
+
+  tags = {
+    Name = "Route-public"
+  }
+  depends_on = [
+    aws_vpc.main-vpc,
+    aws_subnet.private_subnet
+  ]
+}
+
+resource "aws_route_table_association" "route2private"{
+  subnet_id = aws_subnet.private_subnet.id
+  route_table_id = aws_route_table.route-private.id
+
+  depends_on = [
+    aws_route_table.route-private
+  ]
+}
+resource "aws_network_interface" "pfsense-internal" {
+  subnet_id       = aws_subnet.private_subnet.id
+  private_ips     = ["10.0.2.5"]
+  security_groups = [aws_security_group.pfsense_sg.id]
+
+  attachment {
+    instance     = aws_instance.pfsense-firewall.id
+    device_index = 1
+  }
+  tags = {
+    Name = "Pfsense-internal-network-interface-card"
+  }
+}
 resource "aws_security_group" "pfsense_sg" {
   name        = "pfsense-sg"
   description = "Pfsense Security Group"
@@ -123,91 +195,21 @@ resource "aws_security_group" "test" {
         cidr_blocks = ["0.0.0.0/0"]
     }
 
-  # ingress {
-  #   from_port   = 443
-  #   to_port     = 443
-  #   protocol    = "tcp"
-  #   cidr_blocks = ["0.0.0.0/0"]
-  # }
-  # ingress {
-  #   from_port   = 80
-  #   to_port     = 80
-  #   protocol    = "tcp"
-  #   cidr_blocks = ["0.0.0.0/0"]
-  # }
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
 }
-# resource "aws_network_interface" "lan" {
-#   subnet_id = aws_subnet.private_subnet.id
-#   # private_ip = ["10.0.2.5"]
-#   private_ip = "10.0.2.5"
-# }
-# data "aws_network_interfaces" "example" {
-#   tags = {
-#     Name = "test"
-#   }
-# }
 
-# output "example1" {
-#   value = data.aws_network_interfaces.example.ids
-# }
-# create a private subnet for our for our 
-
-resource "aws_subnet" "private_subnet" {
-  cidr_block = "10.0.2.0/24"
-  vpc_id     = aws_vpc.main-vpc.id
-  # availability_zone = "us-east-1b"
-
-  tags = {
-    Name = "private-subnet"
-  }
-  depends_on = [
-    aws_subnet.public_subnet
-  ]
-}
-
-resource "aws_network_interface" "pfsense-internal" {
-  subnet_id       = aws_subnet.private_subnet.id
-  private_ips     = ["10.0.2.5"]
-  security_groups = [aws_security_group.pfsense_sg.id]
-
-  attachment {
-    # instance     = "${aws_instance.test.id}"
-    instance     = aws_instance.pfsense-firewall.id
-    device_index = 1
-  }
-  tags = {
-    Name = "Pfsense-internal-network-interface-card"
-  }
-}
-
-# resource "aws_network_interface_attachment" "pfsense-internal" {
-#     # instance_id = "${aws_instance.test.id}"
-#     instance_id = aws_instance.pfsense-firewall.id
-#     # network_interface_id = "${aws_network_interface.test.id}"
-#     network_interface_id = aws_network_interface.pfsense-internal.id
-#     device_index = 0
-# }
-
-
-resource "aws_route_table" "route-public" {
-  vpc_id = aws_vpc.main-vpc.id
-
-  route {
-    cidr_block           = "0.0.0.0/0"
-    gateway_id           = aws_internet_gateway.igw.id
-    # network_interface_id = aws_instance.pfsense-firewall.id
-  }
-
-  tags = {
-    Name = "Route-public"
-  }
-  depends_on = [
-    aws_vpc.main-vpc,
-    aws_internet_gateway.igw,
-    aws_subnet.public_subnet
-  ]
-}
 
 resource "aws_route_table_association" "route2public" {
   subnet_id      = aws_subnet.public_subnet.id
@@ -218,30 +220,12 @@ resource "aws_route_table_association" "route2public" {
   ]
 }
 
-resource "aws_route_table" "route-private" {
-  vpc_id = aws_vpc.main-vpc.id
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    # gateway_id = aws_internet_gateway.igw.id
-    network_interface_id = aws_network_interface.pfsense-internal.id
-  }
-
-  tags = {
-    Name = "Route-public"
-  }
-  depends_on = [
-    aws_vpc.main-vpc,
-    # aws_internet_gateway.igw,
-    aws_subnet.private_subnet
-  ]
+output "public_ip" {
+  value = aws_instance.pfsense-firewall.public_ip
+  description = "This is the public ip address of a web-server"
 }
-
-resource "aws_route_table_association" "route2private"{
-  subnet_id = aws_subnet.private_subnet.id
-  route_table_id = aws_route_table.route-private.id
-
-  depends_on = [
-    aws_route_table.route-private
-  ]
+output "password" {
+  value = aws_instance.pfsense-firewall.password_data
+  description = "This is the public ip address of a web-server"
 }

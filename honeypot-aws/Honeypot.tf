@@ -55,7 +55,6 @@ resource "aws_route_table_association" "main-rt-association" {
 resource "aws_security_group" "tf-honeypot-sg" {
   name        = "tf-honeypot-sg"
   description = "Honeypot security group for inbound and outbound rule"
-  # vpc_id      = var.ec2_vpc_id
   vpc_id = aws_vpc.vpc.id
   ingress {
     from_port   = 22
@@ -79,21 +78,18 @@ resource "aws_security_group" "tf-honeypot-sg" {
     from_port   = 64294
     to_port     = 64294
     protocol    = "tcp"
-    # cidr_blocks = var.admin_ip
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
     from_port   = 64295
     to_port     = 64295
     protocol    = "tcp"
-    # cidr_blocks = var.admin_ip
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
     from_port   = 64297
     to_port     = 64297
     protocol    = "tcp"
-    # cidr_blocks = var.admin_ip
     cidr_blocks = ["0.0.0.0/0"]
   }
   egress {
@@ -108,37 +104,10 @@ resource "aws_security_group" "tf-honeypot-sg" {
 
 }
 
-# resource "aws_security_group" "pfsense-sg" {
-#   name        = "pfsense-sg"
-#   description = "pfsense secruity group"
-#   vpc_id      = aws_vpc.vpc.id
-
-#   ingress {
-#     from_port   = 22
-#     to_port     = 22
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-#   ingress {
-#     from_port   = 443
-#     to_port     = 443
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-#   ingress {
-#     from_port   = 80
-#     to_port     = 80
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-# }
 resource "aws_instance" "honeypot" {
-  # ami = "ami-05dd1b6e7ef6f8378" # debian 11 on us-east-1
-  # ami = "ami-046e2e6927e88c5ec"
-  # debian 11 on us-east-2
   ami = "ami-04dd0542609808c50"
-  instance_type = var.instance_type
-  key_name = "pfsense+"
+  instance_type = "t3.large"
+  key_name = "pfsense"
   subnet_id = aws_subnet.main-subnet.id
 
   tags = {
@@ -154,29 +123,11 @@ resource "aws_instance" "honeypot" {
   vpc_security_group_ids      = [aws_security_group.tf-honeypot-sg.id]
   associate_public_ip_address = true
 }
+resource "aws_eip" "el_ip" {
+  instance = aws_instance.honeypot.id
+  vpc = true
+}
 
-# resource "aws_instance" "pfsense" {
-#   ami           = "ami-0f1c68e571ab71af6"
-#   instance_type = "m5.large"
-#   key_name      = "web"
-#   subnet_id     = aws_subnet.main-subnet.id
-
-#   tags = {
-#     Name = "Pfsense"
-#   }
-
-#   root_block_device {
-#     volume_type           = "gp2"
-#     volume_size           = 30
-#     delete_on_termination = true
-#   }
-#   # user_data                   = templatefile("./pfsense-init.yaml", { timezone = var.timezone, password = var.pfsense_password, pfsense_user = var.pfsense_user })
-#   # user_data_replace_on_change = true
-#   # user_data                   = templatefile("./pfsense-init.yaml", { timezone = var.timezone, password = var.pfsense_password, pfsense_user = var.pfsense_user })
-#   # user_data_replace_on_change = true
-#   vpc_security_group_ids      = [aws_security_group.tf-honeypot-sg.id]
-#   associate_public_ip_address = true
-# }
 output "public_ip" {
   value       = aws_instance.honeypot.public_ip
   description = "The public ip address of a webserver"
